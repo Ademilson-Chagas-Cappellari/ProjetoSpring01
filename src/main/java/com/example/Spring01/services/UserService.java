@@ -3,11 +3,16 @@ package com.example.Spring01.services;
 import java.util.List;
 import java.util.Optional;
 
+import javax.persistence.EntityNotFoundException;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import com.example.Spring01.entities.User;
 import com.example.Spring01.repositories.UserRepository;
+import com.example.Spring01.services.exceptions.DatabaseException;
 import com.example.Spring01.services.exceptions.ResourceNotFoundException;
 
 @Service
@@ -30,13 +35,25 @@ public class UserService {
 	}
 	
 	public void delete(Long id) {
-		repository.deleteById(id);
+		try {
+			repository.deleteById(id);
+		} catch (EmptyResultDataAccessException e) {
+			throw new ResourceNotFoundException(id);
+		} catch (DataIntegrityViolationException e) {
+			throw new DatabaseException(e.getMessage());
+		}
 	}
 	
+	
+	
 	public User update(Long id, User obj) {
-		User entity = repository.getOne(id);
-		updateDate(entity, obj);
-		return repository.save(entity);
+		try {
+			User entity = repository.getOne(id);
+			updateDate(entity, obj);
+			return repository.save(entity);
+		}catch (EntityNotFoundException e) {
+			throw new ResourceNotFoundException(id);
+		}
 	}
 
 	// ATUALIZACAO DE UM USUARIO 
